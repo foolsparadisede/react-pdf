@@ -9,7 +9,7 @@ import canNodeWrap from '../node/getWrap';
 import getWrapArea from '../page/getWrapArea';
 import getContentArea from '../page/getContentArea';
 import createInstances from '../node/createInstances';
-import shouldNodeBreak from '../node/shouldBreak';
+import shouldNodeBreak from "../node/shouldBreak";
 import resolveTextLayout from './resolveTextLayout';
 import resolveInheritance from './resolveInheritance';
 import { resolvePageDimensions } from './resolveDimensions';
@@ -24,13 +24,14 @@ import {
   SafeViewNode,
   YogaInstance,
 } from '../types';
+import shouldBreak from "../node/shouldBreak";
 
 const isText = (node: SafeNode): node is SafeTextNode => node.type === P.Text;
 
 // Prevent splitting elements by low decimal numbers
 const SAFETY_THRESHOLD = 0.001;
 
-const assingChildren = <T>(children: SafeNode[], node: T): T =>
+const assignChildren = <T>(children: SafeNode[], node: T): T =>
   Object.assign({}, node, { children });
 
 const getTop = (node: SafeNode) => node.box?.top || 0;
@@ -59,66 +60,79 @@ const splitNodes = (height: number, contentArea: number, nodes: SafeNode[]) => {
   const currentChildren: SafeNode[] = [];
   const nextChildren: SafeNode[] = [];
 
+  const fixedNodes = nodes.filter(isFixed);
+  const fixedNodesHeight = fixedNodes.reduce((acc, node) => node.box.height + (+node.box.marginBottom || 0) + (+node.box.marginTop || 0) + acc, 0);
+
+  let remainingSpace = height - fixedNodesHeight;
+
   for (let i = 0; i < nodes.length; i += 1) {
-    const child = nodes[i];
+    const node = nodes[i];
     const futureNodes = nodes.slice(i + 1);
     const futureFixedNodes = futureNodes.filter(isFixed);
+    //
+    // const nodeTop = getTop(child);
+    // const nodeHeight = child.box.height;
+    // const isOutside = height <= nodeTop;
+    // const shouldBreak = shouldNodeBreak(child, futureNodes, height);
+    // const shouldSplit = height + SAFETY_THRESHOLD < nodeTop + nodeHeight;
+    // const canWrap = canNodeWrap(child);
+    // const fitsInsidePage = nodeHeight <= contentArea;
 
-    const nodeTop = getTop(child);
-    const nodeHeight = child.box.height;
-    const isOutside = height <= nodeTop;
-    const shouldBreak = shouldNodeBreak(child, futureNodes, height);
-    const shouldSplit = height + SAFETY_THRESHOLD < nodeTop + nodeHeight;
-    const canWrap = canNodeWrap(child);
-    const fitsInsidePage = nodeHeight <= contentArea;
+    remainingSpace -= node.box.marginTop;
+    remainingSpace -= node.box.marginBottom;
 
-    if (isFixed(child)) {
-      nextChildren.push(child);
-      currentChildren.push(child);
+
+    if (isFixed(node)) {
+      nextChildren.push(node);
+      currentChildren.push(node);
       continue;
     }
 
-    if (isOutside) {
-      const box = Object.assign({}, child.box, { top: child.box.top - height });
-      const next = Object.assign({}, child, { box });
-      nextChildren.push(next);
-      continue;
-    }
+    if (shouldNodeBreak(node, remainingSpace)) {
+      console.log('should break', node);
 
-    if (!fitsInsidePage && !canWrap) {
-      currentChildren.push(child);
-      nextChildren.push(...futureNodes);
-      warnUnavailableSpace(child);
-      break;
-    }
-
-    if (shouldBreak) {
-      const box = Object.assign({}, child.box, { top: child.box.top - height });
-      const props = Object.assign({}, child.props, {
+      const box = Object.assign({}, node.box, { top: 0 });
+      const props = Object.assign({}, node.props, {
         wrap: true,
         break: false,
       });
-      const next = Object.assign({}, child, { box, props });
+      const next = Object.assign({}, node, { box, props });
 
       currentChildren.push(...futureFixedNodes);
       nextChildren.push(next, ...futureNodes);
       break;
     }
 
-    if (shouldSplit) {
-      const [currentChild, nextChild] = split(child, height, contentArea);
+    if (remainingSpace >= node.box.height) {
+      console.log(remainingSpace, node.box.height);
+
+      currentChildren.push(node);
+      remainingSpace -= node.box.height;
+      continue;
+    }
+
+    if (canNodeWrap(node)) {
+      console.log('wrap node', node);
+
+      const [currentChild, nextChild] = split(
+        node,
+        remainingSpace,
+        contentArea,
+      );
+
+      console.log('wrapped', currentChild, nextChild);
 
       // All children are moved to the next page, it doesn't make sense to show the parent on the current page
-      if (child.children.length > 0 && currentChild.children.length === 0) {
+      if (node.children.length > 0 && currentChild.children.length === 0) {
         // But if the current page is empty then we can just include the parent on the current page
         if (currentChildren.length === 0) {
-          currentChildren.push(child, ...futureFixedNodes);
+          currentChildren.push(node, ...futureFixedNodes);
           nextChildren.push(...futureNodes);
         } else {
-          const box = Object.assign({}, child.box, {
-            top: child.box.top - height,
+          const box = Object.assign({}, node.box, {
+            top: node.box.top - height,
           });
-          const next = Object.assign({}, child, { box });
+          const next = Object.assign({}, node, { box });
 
           currentChildren.push(...futureFixedNodes);
           nextChildren.push(next, ...futureNodes);
@@ -129,37 +143,79 @@ const splitNodes = (height: number, contentArea: number, nodes: SafeNode[]) => {
       if (currentChild) currentChildren.push(currentChild);
       if (nextChild) nextChildren.push(nextChild);
 
-      continue;
+      currentChildren.push(...futureFixedNodes);
+      nextChildren.push(...futureNodes);
+
+      break;
     }
 
-    currentChildren.push(child);
+    console.log('cannot be wrapped', node);
+
+    nextChildren.push(node);
+
+    // if (isFixed(child)) {
+    //   console.log('fixed', child);
+    //
+    //   nextChildren.push(child);
+    //   if (height > nodeHeight) {
+    //     currentChildren.push(child);
+    //   }
+    //   continue;
+    // }
+    //
+    // if (isOutside) {
+    //   console.log('is outside', child);
+    //   const box = Object.assign({}, child.box, { top: child.box.top - height });
+    //   const next = Object.assign({}, child, { box });
+    //   nextChildren.push(next);
+    //   continue;
+    // }
+    //
+    // if (!fitsInsidePage && !canWrap) {
+    //   console.log('!fitsInsidePage && !canWrap', child);
+    //   currentChildren.push(child);
+    //   nextChildren.push(...futureNodes);
+    //   warnUnavailableSpace(child);
+    //   break;
+    // }
+    //
+    // if (shouldBreak) {
+    //   console.log('should break', child);
+
+    // }
+    //
+    // if (shouldSplit) {
+    //   console.log('should split', child);
+
+    // }
+    //
+    // console.log('currentchildren', child);
+
+    // currentChildren.push(child);
   }
 
   return [currentChildren, nextChildren];
 };
 
-const splitChildren = (height: number, contentArea: number, node: SafeNode) => {
-  const children = node.children || [];
-  const availableHeight = height - getTop(node);
-  return splitNodes(availableHeight, contentArea, children);
-};
 
 const splitView = (node: SafeNode, height: number, contentArea: number) => {
   const [currentNode, nextNode] = splitNode(node, height);
-  const [currentChilds, nextChildren] = splitChildren(
+  const [currentChildren, nextChildren] = splitNodes(
     height,
     contentArea,
-    node,
+    node.children || [],
   );
 
   return [
-    assingChildren(currentChilds, currentNode),
-    assingChildren(nextChildren, nextNode),
+    assignChildren(currentChildren, currentNode),
+    assignChildren(nextChildren, nextNode),
   ];
 };
 
-const split = (node: SafeNode, height: number, contentArea: number) =>
-  isText(node) ? splitText(node, height) : splitView(node, height, contentArea);
+const split = (node: SafeNode, remainingHeight: number, contentArea: number) =>
+  isText(node)
+    ? splitText(node, remainingHeight)
+    : splitView(node, remainingHeight, contentArea);
 
 const shouldResolveDynamicNodes = (node: SafeNode) => {
   const children = node.children || [];
@@ -336,7 +392,7 @@ const resolvePagination = (
     dissocSubPageData(resolvePageIndices(fontStore, root.yoga, ...args)),
   );
 
-  return assingChildren(pages, root);
+  return assignChildren(pages, root);
 };
 
 export default resolvePagination;

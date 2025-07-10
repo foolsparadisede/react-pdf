@@ -1,3 +1,4 @@
+import breakPadding from './break-padding';
 import duplicatedImages from './duplicated-images';
 import ellipsis from './ellipsis';
 import emoji from './emoji';
@@ -21,6 +22,7 @@ import transformOrigin from './transform-origin';
 import forms from './forms';
 
 const EXAMPLES = [
+  breakPadding,
   duplicatedImages,
   ellipsis,
   emoji,

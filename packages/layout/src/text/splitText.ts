@@ -2,12 +2,11 @@ import lineIndexAtHeight from './lineIndexAtHeight';
 import heightAtLineIndex from './heightAtLineIndex';
 import { SafeTextNode } from '../types';
 
-const getLineBreak = (node: SafeTextNode, height: number) => {
-  const top = node.box?.top || 0;
+const getLineBreak = (node: SafeTextNode, remainingSpace: number) => {
   const widows = node.props.widows || 2;
   const orphans = node.props.orphans || 2;
   const linesQuantity = node.lines.length;
-  const slicedLine = lineIndexAtHeight(node, height - top);
+  const slicedLine = lineIndexAtHeight(node, remainingSpace);
 
   if (slicedLine === 0) {
     return 0;
@@ -32,9 +31,8 @@ const getLineBreak = (node: SafeTextNode, height: number) => {
   return slicedLine;
 };
 
-// Also receives contentArea in case it's needed
-const splitText = (node: SafeTextNode, height: number) => {
-  const slicedLineIndex = getLineBreak(node, height);
+const splitText = (node: SafeTextNode, remainingSpace: number) => {
+  const slicedLineIndex = getLineBreak(node, remainingSpace);
   const currentHeight = heightAtLineIndex(node, slicedLineIndex);
   const nextHeight = node.box.height - currentHeight;
 

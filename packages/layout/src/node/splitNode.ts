@@ -19,14 +19,13 @@ const splitNode = (node: SafeNode, height: number) => {
     style: {
       ...node.style,
       marginBottom: 0,
-      paddingBottom: 0,
       borderBottomWidth: 0,
       borderBottomLeftRadius: 0,
       borderBottomRightRadius: 0,
     },
   });
 
-  current.style.height = height - nodeTop;
+  current.style.height = null;
 
   const nextHeight = hasFixedHeight(node)
     ? node.box.height - (height - nodeTop)
@@ -41,7 +40,6 @@ const splitNode = (node: SafeNode, height: number) => {
     style: {
       ...node.style,
       marginTop: 0,
-      paddingTop: 0,
       borderTopWidth: 0,
       borderTopLeftRadius: 0,
       borderTopRightRadius: 0,
