@@ -2,14 +2,10 @@ import { isNil } from '@react-pdf/fns';
 
 import { SafeNode } from '../types';
 
-const getTop = (node: SafeNode) => node.box?.top || 0;
-
 const hasFixedHeight = (node: SafeNode) => !isNil(node.style?.height);
 
-const splitNode = (node: SafeNode, height: number) => {
+const splitNode = (node: SafeNode, remainingHeight: number) => {
   if (!node) return [null, null];
-
-  const nodeTop = getTop(node);
 
   const current: SafeNode = Object.assign({}, node, {
     box: {
@@ -25,10 +21,10 @@ const splitNode = (node: SafeNode, height: number) => {
     },
   });
 
-  current.style.height = null;
+  current.style.height = remainingHeight;
 
   const nextHeight = hasFixedHeight(node)
-    ? node.box.height - (height - nodeTop)
+    ? node.box.height - remainingHeight
     : null;
 
   const next: SafeNode = Object.assign({}, node, {

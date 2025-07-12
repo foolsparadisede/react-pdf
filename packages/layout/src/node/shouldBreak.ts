@@ -4,16 +4,20 @@ import getWrap from './getWrap';
 const getBreak = (node: SafeNode) =>
   'break' in node.props ? node.props.break : false;
 
-const shouldBreak = (
-  child: SafeNode,
-  remainingSpace: number,
-) => {
+const getMinPresenceAhead = (node: SafeNode) =>
+  'minPresenceAhead' in node.props ? node.props.minPresenceAhead : 0;
+
+const shouldBreak = (child: SafeNode, remainingSpace: number) => {
   if ('fixed' in child.props) return false;
 
   const shouldSplit = remainingSpace < child.box.height;
   const canWrap = getWrap(child);
 
-  return getBreak(child) || (shouldSplit && !canWrap);
+  return (
+    getBreak(child) ||
+    (shouldSplit && !canWrap) ||
+    getMinPresenceAhead(child) > remainingSpace
+  );
 };
 
 export default shouldBreak;

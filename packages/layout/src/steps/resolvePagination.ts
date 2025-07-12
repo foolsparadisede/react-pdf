@@ -9,7 +9,7 @@ import canNodeWrap from '../node/getWrap';
 import getWrapArea from '../page/getWrapArea';
 import getContentArea from '../page/getContentArea';
 import createInstances from '../node/createInstances';
-import shouldNodeBreak from "../node/shouldBreak";
+import shouldNodeBreak from '../node/shouldBreak';
 import resolveTextLayout from './resolveTextLayout';
 import resolveInheritance from './resolveInheritance';
 import { resolvePageDimensions } from './resolveDimensions';
@@ -24,7 +24,6 @@ import {
   SafeViewNode,
   YogaInstance,
 } from '../types';
-import shouldBreak from "../node/shouldBreak";
 
 const isText = (node: SafeNode): node is SafeTextNode => node.type === P.Text;
 
@@ -56,14 +55,25 @@ const warnUnavailableSpace = (node: SafeNode) => {
   );
 };
 
-const splitNodes = (height: number, contentArea: number, nodes: SafeNode[]) => {
+const splitNodes = (
+  remainingHeight: number,
+  contentArea: number,
+  nodes: SafeNode[],
+) => {
   const currentChildren: SafeNode[] = [];
   const nextChildren: SafeNode[] = [];
 
   const fixedNodes = nodes.filter(isFixed);
-  const fixedNodesHeight = fixedNodes.reduce((acc, node) => node.box.height + (+node.box.marginBottom || 0) + (+node.box.marginTop || 0) + acc, 0);
+  const fixedNodesHeight = fixedNodes.reduce(
+    (acc, node) =>
+      node.box.height +
+      (+node.box.marginBottom || 0) +
+      (+node.box.marginTop || 0) +
+      acc,
+    0,
+  );
 
-  let remainingSpace = height - fixedNodesHeight;
+  let remainingSpace = remainingHeight - fixedNodesHeight;
 
   for (let i = 0; i < nodes.length; i += 1) {
     const node = nodes[i];
@@ -130,7 +140,7 @@ const splitNodes = (height: number, contentArea: number, nodes: SafeNode[]) => {
           nextChildren.push(...futureNodes);
         } else {
           const box = Object.assign({}, node.box, {
-            top: node.box.top - height,
+            top: node.box.top - (contentArea - remainingSpace),
           });
           const next = Object.assign({}, node, { box });
 
@@ -198,10 +208,10 @@ const splitNodes = (height: number, contentArea: number, nodes: SafeNode[]) => {
 };
 
 
-const splitView = (node: SafeNode, height: number, contentArea: number) => {
-  const [currentNode, nextNode] = splitNode(node, height);
+const splitView = (node: SafeNode, remainingHeight: number, contentArea: number) => {
+  const [currentNode, nextNode] = splitNode(node, remainingHeight);
   const [currentChildren, nextChildren] = splitNodes(
-    height,
+    remainingHeight,
     contentArea,
     node.children || [],
   );
