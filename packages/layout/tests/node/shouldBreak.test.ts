@@ -13,7 +13,6 @@ describe('node shouldBreak', () => {
         children: [],
         box: { top: 50, right: 0, bottom: 0, left: 0, height: 400, width: 200 },
       },
-      [],
       1000,
     );
 
@@ -29,7 +28,6 @@ describe('node shouldBreak', () => {
         children: [],
         box: { top: 50, right: 0, bottom: 0, left: 0, height: 400, width: 200 },
       },
-      [],
       1000,
     );
 
@@ -52,7 +50,6 @@ describe('node shouldBreak', () => {
           width: 200,
         },
       },
-      [],
       1000,
     );
 
@@ -75,7 +72,6 @@ describe('node shouldBreak', () => {
           width: 200,
         },
       },
-      [],
       1000,
     );
 
@@ -98,7 +94,6 @@ describe('node shouldBreak', () => {
           width: 200,
         },
       },
-      [],
       1000,
     );
 
@@ -123,67 +118,7 @@ describe('node shouldBreak', () => {
           marginBottom: 0,
         },
       },
-      [
-        {
-          type: 'VIEW',
-          props: {},
-          style: {},
-          children: [],
-          box: {
-            top: 900,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            height: 200,
-            width: 200,
-            marginTop: 0,
-            marginBottom: 0,
-          },
-        },
-      ],
-      1000,
-    );
-
-    expect(result).toEqual(true);
-  });
-
-  test('should break when minPresenceAhead is large enough and there are overflowing siblings due to margins after the child', () => {
-    const result = shouldBreak(
-      {
-        type: 'VIEW',
-        props: { minPresenceAhead: 400 },
-        style: {},
-        children: [],
-        box: {
-          top: 500,
-          right: 0,
-          bottom: 0,
-          left: 0,
-          height: 400,
-          width: 200,
-          marginTop: 0,
-          marginBottom: 0,
-        },
-      },
-      [
-        {
-          type: 'VIEW',
-          props: {},
-          style: {},
-          children: [],
-          box: {
-            top: 1100,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            height: 0,
-            width: 200,
-            marginTop: 200,
-            marginBottom: 0,
-          },
-        },
-      ],
-      1000,
+      100,
     );
 
     expect(result).toEqual(true);
