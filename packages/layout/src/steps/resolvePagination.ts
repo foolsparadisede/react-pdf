@@ -1,5 +1,5 @@
 import * as P from '@react-pdf/primitives';
-import { omit, compose } from '@react-pdf/fns';
+import { compose, omit } from '@react-pdf/fns';
 import FontStore from '@react-pdf/font';
 
 import isFixed from '../node/isFixed';
@@ -27,13 +27,8 @@ import {
 
 const isText = (node: SafeNode): node is SafeTextNode => node.type === P.Text;
 
-// Prevent splitting elements by low decimal numbers
-const SAFETY_THRESHOLD = 0.001;
-
 const assignChildren = <T>(children: SafeNode[], node: T): T =>
   Object.assign({}, node, { children });
-
-const getTop = (node: SafeNode) => node.box?.top || 0;
 
 const allFixed = (nodes: SafeNode[]) => nodes.every(isFixed);
 
@@ -79,18 +74,9 @@ const splitNodes = (
     const node = nodes[i];
     const futureNodes = nodes.slice(i + 1);
     const futureFixedNodes = futureNodes.filter(isFixed);
-    //
-    // const nodeTop = getTop(child);
-    // const nodeHeight = child.box.height;
-    // const isOutside = height <= nodeTop;
-    // const shouldBreak = shouldNodeBreak(child, futureNodes, height);
-    // const shouldSplit = height + SAFETY_THRESHOLD < nodeTop + nodeHeight;
-    // const canWrap = canNodeWrap(child);
-    // const fitsInsidePage = nodeHeight <= contentArea;
 
     remainingSpace -= node.box.marginTop;
     remainingSpace -= node.box.marginBottom;
-
 
     if (isFixed(node)) {
       nextChildren.push(node);
@@ -99,8 +85,6 @@ const splitNodes = (
     }
 
     if (shouldNodeBreak(node, remainingSpace)) {
-      console.log('should break', node);
-
       const box = Object.assign({}, node.box, { top: 0 });
       const props = Object.assign({}, node.props, {
         wrap: true,
@@ -114,23 +98,17 @@ const splitNodes = (
     }
 
     if (remainingSpace >= node.box.height) {
-      console.log(remainingSpace, node.box.height);
-
       currentChildren.push(node);
       remainingSpace -= node.box.height;
       continue;
     }
 
     if (canNodeWrap(node)) {
-      console.log('wrap node', node);
-
       const [currentChild, nextChild] = split(
         node,
         remainingSpace,
         contentArea,
       );
-
-      console.log('wrapped', currentChild, nextChild);
 
       // All children are moved to the next page, it doesn't make sense to show the parent on the current page
       if (node.children.length > 0 && currentChild.children.length === 0) {
@@ -159,56 +137,18 @@ const splitNodes = (
       break;
     }
 
-    console.log('cannot be wrapped', node);
-
+    warnUnavailableSpace(node);
     nextChildren.push(node);
-
-    // if (isFixed(child)) {
-    //   console.log('fixed', child);
-    //
-    //   nextChildren.push(child);
-    //   if (height > nodeHeight) {
-    //     currentChildren.push(child);
-    //   }
-    //   continue;
-    // }
-    //
-    // if (isOutside) {
-    //   console.log('is outside', child);
-    //   const box = Object.assign({}, child.box, { top: child.box.top - height });
-    //   const next = Object.assign({}, child, { box });
-    //   nextChildren.push(next);
-    //   continue;
-    // }
-    //
-    // if (!fitsInsidePage && !canWrap) {
-    //   console.log('!fitsInsidePage && !canWrap', child);
-    //   currentChildren.push(child);
-    //   nextChildren.push(...futureNodes);
-    //   warnUnavailableSpace(child);
-    //   break;
-    // }
-    //
-    // if (shouldBreak) {
-    //   console.log('should break', child);
-
-    // }
-    //
-    // if (shouldSplit) {
-    //   console.log('should split', child);
-
-    // }
-    //
-    // console.log('currentchildren', child);
-
-    // currentChildren.push(child);
   }
 
   return [currentChildren, nextChildren];
 };
 
-
-const splitView = (node: SafeNode, remainingHeight: number, contentArea: number) => {
+const splitView = (
+  node: SafeNode,
+  remainingHeight: number,
+  contentArea: number,
+) => {
   const [currentNode, nextNode] = splitNode(node, remainingHeight);
   const [currentChildren, nextChildren] = splitNodes(
     remainingHeight,
