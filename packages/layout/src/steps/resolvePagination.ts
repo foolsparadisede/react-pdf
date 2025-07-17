@@ -77,6 +77,8 @@ const splitNodes = (
 
     remainingSpace -= node.box.marginTop;
     remainingSpace -= node.box.marginBottom;
+    remainingSpace -= node.box.borderBottomWidth;
+    remainingSpace -= node.box.borderTopWidth;
 
     if (isFixed(node)) {
       nextChildren.push(node);
