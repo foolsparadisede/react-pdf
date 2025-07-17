@@ -110,24 +110,6 @@ const splitNodes = (
         contentArea,
       );
 
-      // All children are moved to the next page, it doesn't make sense to show the parent on the current page
-      if (node.children.length > 0 && currentChild.children.length === 0) {
-        // But if the current page is empty then we can just include the parent on the current page
-        if (currentChildren.length === 0) {
-          currentChildren.push(node, ...futureFixedNodes);
-          nextChildren.push(...futureNodes);
-        } else {
-          const box = Object.assign({}, node.box, {
-            top: node.box.top - (contentArea - remainingSpace),
-          });
-          const next = Object.assign({}, node, { box });
-
-          currentChildren.push(...futureFixedNodes);
-          nextChildren.push(next, ...futureNodes);
-        }
-        break;
-      }
-
       if (currentChild) currentChildren.push(currentChild);
       if (nextChild) nextChildren.push(nextChild);
 
@@ -137,7 +119,10 @@ const splitNodes = (
       break;
     }
 
-    warnUnavailableSpace(node);
+    if (node.box.height > contentArea) {
+      warnUnavailableSpace(node);
+      continue;
+    }
     nextChildren.push(node);
   }
 
@@ -151,7 +136,7 @@ const splitView = (
 ) => {
   const [currentNode, nextNode] = splitNode(node, remainingHeight);
   const [currentChildren, nextChildren] = splitNodes(
-    remainingHeight,
+    remainingHeight - currentNode.box.paddingBottom - currentNode.box.paddingTop - currentNode.box.borderTopWidth - currentNode.box.borderBottomWidth,
     contentArea,
     node.children || [],
   );
@@ -222,13 +207,12 @@ const splitPage = (
   fontStore: FontStore,
   yoga: YogaInstance,
 ): SafePageNode[] => {
-  const wrapArea = getWrapArea(page);
   const contentArea = getContentArea(page);
   const dynamicPage = resolveDynamicPage({ pageNumber }, page, fontStore, yoga);
   const height = page.style.height;
 
   const [currentChilds, nextChilds] = splitNodes(
-    wrapArea,
+    contentArea,
     contentArea,
     dynamicPage.children,
   );

@@ -5,6 +5,7 @@ import { loadYoga } from '../../src/yoga';
 import resolvePagination from '../../src/steps/resolvePagination';
 import resolveDimensions from '../../src/steps/resolveDimensions';
 import { SafeDocumentNode } from '../../src/types';
+import { readFileSync } from "fs"
 
 const fontStore = new FontStore();
 

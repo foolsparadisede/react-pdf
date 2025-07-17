@@ -63,7 +63,6 @@ const splitText = (node: SafeTextNode, remainingSpace: number) => {
     style: {
       ...node.style,
       marginTop: 0,
-      paddingTop: 0,
       borderTopWidth: 0,
       borderTopLeftRadius: 0,
       borderTopRightRadius: 0,
