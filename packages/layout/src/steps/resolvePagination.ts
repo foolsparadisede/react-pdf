@@ -72,16 +72,14 @@ const splitNodes = (
     const futureNodes = nodes.slice(i + 1);
     const futureFixedNodes = futureNodes.filter(isFixed);
 
-    remainingSpace -= node.box.marginTop;
-    remainingSpace -= node.box.marginBottom;
-    remainingSpace -= node.box.borderBottomWidth;
-    remainingSpace -= node.box.borderTopWidth;
-
     if (isFixed(node)) {
       nextChildren.push(node);
       currentChildren.push(node);
       continue;
     }
+
+    remainingSpace -= node.box.marginTop;
+    remainingSpace -= node.box.marginBottom;
 
     if (shouldNodeBreak(node, remainingSpace)) {
       const box = Object.assign({}, node.box, { top: 0 });
