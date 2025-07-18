@@ -4,15 +4,18 @@ import FontStore from '@react-pdf/font';
 import { loadYoga } from '../../src/yoga';
 import resolvePagination from '../../src/steps/resolvePagination';
 import resolveDimensions from '../../src/steps/resolveDimensions';
+import resolveStyles from '../../src/steps/resolveStyles';
 import { SafeDocumentNode } from '../../src/types';
-import { readFileSync } from "fs"
-import { SafeTextInstanceNode, SafeTextNode } from "../../lib";
+import { SafeTextInstanceNode, SafeTextNode } from '../../lib';
 
 const fontStore = new FontStore();
 
 // dimensions is required by pagination step and them are calculated here
 const calcLayout = (node: SafeDocumentNode) =>
-  resolvePagination(resolveDimensions(node, fontStore), fontStore);
+  resolvePagination(
+    resolveDimensions(resolveStyles(node), fontStore),
+    fontStore,
+  );
 
 describe('pagination step', () => {
   test('should stretch absolute block to full page size', async () => {
@@ -84,7 +87,11 @@ describe('pagination step', () => {
             {
               type: 'TEXT',
               style: {},
-              props: {fixed: true, render: ({pageNumber, totalPages}) => `${pageNumber}/${totalPages}`},
+              props: {
+                fixed: true,
+                render: ({ pageNumber, totalPages }) =>
+                  `${pageNumber}/${totalPages}`,
+              },
               children: [],
             },
             {
@@ -98,11 +105,15 @@ describe('pagination step', () => {
       ],
     });
 
-    const pageNumber = (layout.children[0]!.children![0].children[0]! as SafeTextInstanceNode).value!;
-    const pageNumber2 = (layout.children[1]!.children![0].children[0]! as SafeTextInstanceNode).value!;
+    const pageNumber = (
+      layout.children[0]!.children![0].children[0]! as SafeTextInstanceNode
+    ).value!;
+    const pageNumber2 = (
+      layout.children[1]!.children![0].children[0]! as SafeTextInstanceNode
+    ).value!;
 
-    expect(pageNumber).toBe("1/2");
-    expect(pageNumber2).toBe("2/2");
+    expect(pageNumber).toBe('1/2');
+    expect(pageNumber2).toBe('2/2');
   });
 
   test('should render page number inside view', async () => {
@@ -124,14 +135,17 @@ describe('pagination step', () => {
             {
               type: 'VIEW',
               props: {
-                fixed: true
+                fixed: true,
               },
               style: {},
               children: [
                 {
                   type: 'TEXT',
                   style: {},
-                  props: {render: ({pageNumber, totalPages}) => `${pageNumber}/${totalPages}`},
+                  props: {
+                    render: ({ pageNumber, totalPages }) =>
+                      `${pageNumber}/${totalPages}`,
+                  },
                   children: [],
                 },
               ],
@@ -147,11 +161,17 @@ describe('pagination step', () => {
       ],
     });
 
-    const pageNumber = (layout.children[0]!.children![0].children![0].children[0]! as SafeTextInstanceNode).value!;
-    const pageNumber2 = (layout.children[1]!.children![0].children![0].children[0]! as SafeTextInstanceNode).value!;
+    const pageNumber = (
+      layout.children[0]!.children![0].children![0]
+        .children[0]! as SafeTextInstanceNode
+    ).value!;
+    const pageNumber2 = (
+      layout.children[1]!.children![0].children![0]
+        .children[0]! as SafeTextInstanceNode
+    ).value!;
 
-    expect(pageNumber).toBe("1/2");
-    expect(pageNumber2).toBe("2/2");
+    expect(pageNumber).toBe('1/2');
+    expect(pageNumber2).toBe('2/2');
   });
 
   test('should render page number with line height', async () => {
@@ -172,8 +192,8 @@ describe('pagination step', () => {
           children: [
             {
               type: 'TEXT',
-              style: {lineHeight: 1.3, fontSize: 18},
-              props: {render: () => `test`},
+              style: { lineHeight: 1.3, fontSize: 18 },
+              props: { render: () => `test` },
               children: [],
             },
           ],
@@ -211,8 +231,8 @@ describe('pagination step', () => {
               children: [
                 {
                   type: 'TEXT_INSTANCE',
-                  value: 'test'
-                }
+                  value: 'test',
+                },
               ],
             },
           ],

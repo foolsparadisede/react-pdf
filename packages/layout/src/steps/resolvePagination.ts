@@ -6,14 +6,12 @@ import isFixed from '../node/isFixed';
 import splitText from '../text/splitText';
 import splitNode from '../node/splitNode';
 import canNodeWrap from '../node/getWrap';
-import getWrapArea from '../page/getWrapArea';
 import getContentArea from '../page/getContentArea';
 import createInstances from '../node/createInstances';
 import shouldNodeBreak from '../node/shouldBreak';
 import resolveTextLayout from './resolveTextLayout';
 import resolveInheritance from './resolveInheritance';
 import { resolvePageDimensions } from './resolveDimensions';
-import { resolvePageStyles } from './resolveStyles';
 import {
   DynamicPageProps,
   SafeDocumentNode,
@@ -41,7 +39,6 @@ const relayoutPage = compose(
   resolveTextLayout,
   resolvePageDimensions,
   resolveInheritance,
-  resolvePageStyles,
 );
 
 const warnUnavailableSpace = (node: SafeNode) => {
@@ -138,7 +135,11 @@ const splitView = (
 ) => {
   const [currentNode, nextNode] = splitNode(node, remainingHeight);
   const [currentChildren, nextChildren] = splitNodes(
-    remainingHeight - currentNode.box.paddingBottom - currentNode.box.paddingTop - currentNode.box.borderTopWidth - currentNode.box.borderBottomWidth,
+    remainingHeight -
+      currentNode.box.paddingBottom -
+      currentNode.box.paddingTop -
+      currentNode.box.borderTopWidth -
+      currentNode.box.borderBottomWidth,
     contentArea,
     node.children || [],
   );
