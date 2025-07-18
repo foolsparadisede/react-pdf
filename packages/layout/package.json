@@ -1,6 +1,6 @@
 {
   "name": "@react-pdf/layout",
-  "version": "4.4.0-fp-3",
+  "version": "4.4.0-fp-4",
   "license": "MIT",
   "description": "Resolve document component's layout",
   "author": "Diego Muracciole <diegomuracciole@gmail.com>",
