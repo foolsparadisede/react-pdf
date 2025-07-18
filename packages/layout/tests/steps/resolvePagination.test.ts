@@ -6,6 +6,7 @@ import resolvePagination from '../../src/steps/resolvePagination';
 import resolveDimensions from '../../src/steps/resolveDimensions';
 import { SafeDocumentNode } from '../../src/types';
 import { readFileSync } from "fs"
+import { SafeTextInstanceNode, SafeTextNode } from "../../lib";
 
 const fontStore = new FontStore();
 
@@ -62,6 +63,166 @@ describe('pagination step', () => {
 
     expect(page.box!.height).toBe(100);
     expect(view.box!.height).toBe(100);
+  });
+
+  test('should render page number', async () => {
+    const yoga = await loadYoga();
+
+    const layout = calcLayout({
+      type: 'DOCUMENT',
+      yoga,
+      props: {},
+      children: [
+        {
+          type: 'PAGE',
+          props: {},
+          style: {
+            width: 100,
+            height: 100,
+          },
+          children: [
+            {
+              type: 'TEXT',
+              style: {},
+              props: {fixed: true, render: ({pageNumber, totalPages}) => `${pageNumber}/${totalPages}`},
+              children: [],
+            },
+            {
+              type: 'VIEW',
+              style: { height: 130 },
+              props: {},
+              children: [],
+            },
+          ],
+        },
+      ],
+    });
+
+    const pageNumber = (layout.children[0]!.children![0].children[0]! as SafeTextInstanceNode).value!;
+    const pageNumber2 = (layout.children[1]!.children![0].children[0]! as SafeTextInstanceNode).value!;
+
+    expect(pageNumber).toBe("1/2");
+    expect(pageNumber2).toBe("2/2");
+  });
+
+  test('should render page number inside view', async () => {
+    const yoga = await loadYoga();
+
+    const layout = calcLayout({
+      type: 'DOCUMENT',
+      yoga,
+      props: {},
+      children: [
+        {
+          type: 'PAGE',
+          props: {},
+          style: {
+            width: 100,
+            height: 100,
+          },
+          children: [
+            {
+              type: 'VIEW',
+              props: {
+                fixed: true
+              },
+              style: {},
+              children: [
+                {
+                  type: 'TEXT',
+                  style: {},
+                  props: {render: ({pageNumber, totalPages}) => `${pageNumber}/${totalPages}`},
+                  children: [],
+                },
+              ],
+            },
+            {
+              type: 'VIEW',
+              style: { height: 130 },
+              props: {},
+              children: [],
+            },
+          ],
+        },
+      ],
+    });
+
+    const pageNumber = (layout.children[0]!.children![0].children![0].children[0]! as SafeTextInstanceNode).value!;
+    const pageNumber2 = (layout.children[1]!.children![0].children![0].children[0]! as SafeTextInstanceNode).value!;
+
+    expect(pageNumber).toBe("1/2");
+    expect(pageNumber2).toBe("2/2");
+  });
+
+  test('should render page number with line height', async () => {
+    const yoga = await loadYoga();
+
+    const layout = calcLayout({
+      type: 'DOCUMENT',
+      yoga,
+      props: {},
+      children: [
+        {
+          type: 'PAGE',
+          props: {},
+          style: {
+            width: 100,
+            height: 100,
+          },
+          children: [
+            {
+              type: 'TEXT',
+              style: {lineHeight: 1.3, fontSize: 18},
+              props: {render: () => `test`},
+              children: [],
+            },
+          ],
+        },
+      ],
+    });
+
+    const textNode = layout.children[0]!.children![0]! as SafeTextNode;
+
+    console.log(textNode);
+
+    expect(textNode.style.lineHeight).toBe(18 * 1.3);
+  });
+
+  test('should render page number with line height 2', async () => {
+    const yoga = await loadYoga();
+
+    const layout = calcLayout({
+      type: 'DOCUMENT',
+      yoga,
+      props: {},
+      children: [
+        {
+          type: 'PAGE',
+          props: {},
+          style: {
+            width: 100,
+            height: 100,
+          },
+          children: [
+            {
+              type: 'TEXT',
+              style: { lineHeight: 1.3, fontSize: 18 },
+              props: {},
+              children: [
+                {
+                  type: 'TEXT_INSTANCE',
+                  value: 'test'
+                }
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    const textNode = layout.children[0]!.children![0]! as SafeTextNode;
+
+    expect(textNode.style.lineHeight).toBe(18 * 1.3);
   });
 
   test('should force new height for split nodes', async () => {
